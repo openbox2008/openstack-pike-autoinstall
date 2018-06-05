@@ -6,7 +6,7 @@
 #例：linux-auto-init.sh network1 172.16.70.71
 #####################################
 
-#0.判断没带参数，输出提示信息
+#0.判断没带参数，不执行，输入提示信息
 if [ "$1" == "" ] 
   then
    echo "please input hostname. example:linux-auto-init test 172.16.70.71"
