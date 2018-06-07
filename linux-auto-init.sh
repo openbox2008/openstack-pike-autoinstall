@@ -6,7 +6,7 @@
 #例：linux-auto-init.sh network1 172.16.70.71
 #####################################
 
-#0.判断没带参数，不执行，输入提示信息
+#0.判断没带参数，输入提示信息
 if [ "$1" == "" ] 
   then
    echo "please input hostname. example:linux-auto-init test 172.16.70.71"
@@ -124,3 +124,16 @@ rpm -ivh https://mirrors.aliyun.com/epel/epel-release-latest-7.noarch.rpm
 yum clean all && yum makecache
 #升级所有包
 yum -y upgrade
+
+#8安装OpenStack仓库的RPM包
+yum -y install  centos-release-openstack-pike
+
+#升级所有包同时也升级软件和系统内核
+yum -y update
+
+#9.安装OpenStack 客户端
+yum -y install python-openstackclient
+
+
+
+
