@@ -47,15 +47,16 @@ systemctl start memcached.service
 yum -y install mariadb mariadb-server python2-PyMySQL
 
 #创建并编辑 /etc/my.cnf.d/openstack.cnf.
-cp /etc/my.cnf.d/openstack.cnf  /etc/my.cnf.d/openstack.cnf.bak
-#修改 [mysqld] 部分，设置 `bind-address`值为控制节点的管理网络IP地址以使得其它节点可以通过管理网络访问数据库：
-
-sed -i '[mysqld]/a\character-set-server = utf8'  /etc/my.cnf.d/openstack.cnf
-sed -i '[mysqld]/a\collation-server = utf8_general_ci'  /etc/my.cnf.d/openstack.cnf
-sed -i '[mysqld]/a\max_connections = 4096'  /etc/my.cnf.d/openstack.cnf
-sed -i '[mysqld]/a\innodb_file_per_table'  /etc/my.cnf.d/openstack.cnf
-sed -i '[mysqld]/a\default-storage-engine = innodb'  /etc/my.cnf.d/openstack.cnf
-sed -i '[mysqld]/a\bind-address = 172.16.100.70'  /etc/my.cnf.d/openstack.cnf
+#编辑[mysqld] 部分，设置 `bind-address`值为控制节点的管理网络IP地址以使得其它节点可以通过管理网络访问数据库：
+cat >/etc/my.cnf.d/openstack.cnf <<eof
+[mysqld]
+bind-address = 172.16.100.70
+character-set-server = utf8
+collation-server = utf8_general_ci
+max_connections = 4096
+innodb_file_per_table
+default-storage-engine = innodb
+eof
 
 #启动数据库服务，并将其配置为开机自启：
 systemctl enable mariadb.service
