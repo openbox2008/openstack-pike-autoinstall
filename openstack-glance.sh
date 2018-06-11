@@ -34,6 +34,90 @@ openstack endpoint create --region RegionOne  image admin http://172.16.100.70:9
 
 
 
+#4.安装软件包
+yum  -y install openstack-glance
+
+#5.修改配置文件
+cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.bak_$(date +%F_%T)
+cat >/etc/glance/glance-api.conf<<eof
+[DEFAULT]
+bind_host = 0.0.0.0
+notification_driver = noop
+
+[glance_store]
+stores = file,http
+default_store = file
+filesystem_store_datadir = /var/lib/glance/images/
+
+[database]
+connection = mysql+pymysql://glance:GLANCE_DBPASS@172.16.100.70/glance
+
+[keystone_authtoken]
+auth_uri = http://172.16.100.70:5000
+auth_url = http://172.16.100.70:35357
+memcached_servers = 172.16.100.70:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = glance
+password = Changeme_123
+
+[paste_deploy]
+flavor = keystone
+eof
+
+#6.修改配置文件glance-registry.conf
+cp /etc/glance/glance-registry.conf /etc/glance/glance-registry.conf.bak_$(date +%F%T)
+cat >/etc/glance/glance-registry.conf <<EOF
+[DEFAULT]
+bind_host = 0.0.0.0
+notification_driver = noop
+
+[database]
+connection = mysql+pymysql://glance:GLANCE_DBPASS@172.16.100.70/glance
+
+[keystone_authtoken]
+auth_uri = http://172.16.100.70:5000
+auth_url = http://172.16.100.70:35357
+memcached_servers = 172.16.100.70:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = glance
+password = Changeme_123
+
+
+[paste_deploy]
+flavor = keystone
+EOF
+
+#7.修改文件权限
+chmod 640 /etc/glance/glance-api.conf /etc/glance/glance-registry.conf 
+chown root:glance /etc/glance/glance-api.conf /etc/glance/glance-registry.conf
+
+#8.创建数据库表结构
+su -s /bin/bash glance -c "glance-manage db_sync" 
+
+#9.启动服务并设置开机启动
+systemctl start openstack-glance-api openstack-glance-registry 
+systemctl enable openstack-glance-api openstack-glance-registry 
+
+
+
+
+#10.下载镜像
+wget -P ~/ http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img
+
+#11.#加载镜像
+openstack image create "cirros01"   --file ~/cirros-0.3.5-x86_64-disk.img   --disk-format qcow2 --container-format bare  --public
+
+
+#其他镜像（根据个人需要）
+wget -P ~/  http://cloud-images.ubuntu.com/releases/16.04/release/ubuntu-16.04-server-cloudimg-amd64-disk1.img 
+openstack image create "Ubuntu1604" --file ~/ubuntu-16.04-server-cloudimg-amd64-disk1.img --disk-format qcow2 --container-format bare --public 
+
 
 
 
