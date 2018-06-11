@@ -34,6 +34,7 @@ openstack flavor create  --vcpus 1 --ram 512 --disk 1 test01
 
 #创建虚拟机
 openstack server create --flavor test01  --image cirros --security-group default --nic net-id=$netID --key-name mykey TServer003
+openstack server create --flavor  ubuntu  --image Ubuntu1604 --security-group  e173ec3d-f4b6-461f-99d9-4d1745353963 --nic net-id=ac42d61e-4856-4d2e-87d3-c3339a1945d4 --key-name mykey TServer005
 
 #查看虚拟机
 openstack server list 

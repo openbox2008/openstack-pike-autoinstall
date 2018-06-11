@@ -61,7 +61,7 @@ project_domain_name = default
 user_domain_name = default
 project_name = service
 username = glance
-password = Changeme_123
+password = 123456
 
 [paste_deploy]
 flavor = keystone
@@ -86,8 +86,7 @@ project_domain_name = default
 user_domain_name = default
 project_name = service
 username = glance
-password = Changeme_123
-
+password = 123456
 
 [paste_deploy]
 flavor = keystone
