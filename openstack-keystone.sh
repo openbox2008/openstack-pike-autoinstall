@@ -8,33 +8,35 @@
 #1.在mariadb上为keystone创建管理数据库：
 
 #去到管理数据库上，以 root 用户连接到数据库服务器：1.创建 keystone 数据库：
-mysql -h 172.16.100.70 -uroot -p123456 -e "CREATE DATABASE keystone;\q;"
+#mysql -h 172.16.100.70 -uroot -p123456 -e "CREATE DATABASE keystone;\q;"
 #2.对`keystone`数据库授予恰当的权限：
-mysql -h 172.16.100.70 -uroot -p123456 -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'KEYSTONE_DBPASS';
-GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'KEYSTONE_DBPASS';\q;"
+#mysql -h 172.16.100.70 -uroot -p123456 -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'KEYSTONE_DBPASS';
+#GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'KEYSTONE_DBPASS';\q;"
 
 #2.在控制节点上安装keystone
-yum -y install openstack-keystone httpd mod_wsgi
+yum  -y install openstack-keystone openstack-utils python-openstackclient httpd mod_wsgi mod_ssl
 
 #编辑文件 /etc/keystone/keystone.conf 
 cp /etc/keystone/keystone.conf  /etc/keystone/keystone.conf.bak
 
 #在`[DEFAULT]`部分，定义初始管理令牌的值：
 #可以使用 openssl rand -hex 10 生成的随机数替换`ADMIN_TOKEN` 值。
-ad_token=openssl rand -hex 10
-sed -i "[DEFAULT]/a\admin_token = $ad_token"  /etc/keystone/keystone.conf
+ad_token=$(openssl rand -hex 10)
+sed -i "/^\[DEFAULT\]/a\admin_token = ${ad_token}"  /etc/keystone/keystone.conf
       
 #在 [database] 部分，配置数据库访问：
-sed -i '[database]/a\connection = mysql+pymysql://keystone:KEYSTONE_DBPASS@172.16.100.70/keystone' /etc/keystone/keystone.conf
+sed -i '/^\[database\]/a\connection = mysql+pymysql://keystone:KEYSTONE_DBPASS@172.16.100.70/keystone' /etc/keystone/keystone.conf
 
 #在`[token]`部分，配置Fernet UUID令牌的提供者。
-sed -i '[token]/a\provider = fernet' /etc/keystone/keystone.conf
-sed -i '[token]/a\driver = memcache' /etc/keystone/keystone.conf
+sed -i '/^\[token\]/a\provider = fernet' /etc/keystone/keystone.conf
+sed -i '/^\[token\]/a\driver = memcache' /etc/keystone/keystone.conf
 
 #为keystone配置memcache服务
 #在keystone.conf 文件中找到以下相关选项memcache_servers ，和driver并按下面的值修改
-sed -i '[cache]/a\memcache_servers = 172.16.100.70:11211' /etc/keystone/keystone.conf
+sed -i '/^\[cache\]/a\memcache_servers = 172.16.100.70:11211' /etc/keystone/keystone.conf
 
+#设置/etc/keystone/keystone.conf的权限
+chown root:keystone /etc/keystone/keystone.conf
 
 #3.在keystone上同步认证服务的数据库：
 su -s /bin/sh -c "keystone-manage db_sync" keystone
@@ -58,9 +60,9 @@ keystone-manage bootstrap \
 #keystone管理员密码为ADMIN_PASS，可以更改。
 
 #6.在keystone上配置 Apache HTTP 服务器：
-
+cp -a  /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf_bak
 #编辑/etc/httpd/conf/httpd.conf 文件，配置`ServerName` 选项为控制节点：#keystone配置apache的ServerName,不然起不来
-sed -i 'ServerName/a\ServerName 172.16.100.70' /etc/httpd/conf/httpd.conf
+sed -i '/^#ServerName/a\ServerName 172.16.100.70' /etc/httpd/conf/httpd.conf
 
 #7.在apache目录下创建keystone配置文件，将keystone在apache中的配置文件软链接到apache目录下
 ln -s /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
